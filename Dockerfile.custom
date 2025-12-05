@@ -6,7 +6,10 @@ COPY app/javascript/dashboard /app/javascript/dashboard
 WORKDIR /app
 
 # Rebuild do frontend para incluir as alterações do Kanban
-# Garantir pnpm disponível no container base
-RUN npm install -g pnpm
-RUN pnpm install --frozen-lockfile && pnpm build
+# Instala pnpm via script oficial (npm não está presente na imagem base)
+ENV PNPM_HOME="/root/.local/share/pnpm"
+ENV PATH="${PNPM_HOME}:${PATH}"
+RUN curl -fsSL https://get.pnpm.io/install.sh | env PNPM_VERSION=10.2.0 SHELL=/bin/sh sh - \
+  && pnpm install --frozen-lockfile \
+  && pnpm build
 

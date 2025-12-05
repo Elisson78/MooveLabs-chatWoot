@@ -35,16 +35,24 @@ const fetchConversations = async () => {
   state.loading = true;
   state.error = '';
   try {
-    const {
-      data: { data },
-    } = await ConversationApi.get({
-      status: 'all',
-      page: 1,
-      assigneeType: 'all',
-      sortBy: 'last_activity_at',
-    });
-    state.conversations = data || [];
-  } catch (error) {
+    // Busca conversas de cada status em paralelo
+    const statuses = ['pending', 'open', 'resolved'];
+    const requests = statuses.map(status =>
+      ConversationApi.get({
+        status,
+        page: 1,
+        assigneeType: 'all',
+        sortBy: 'last_activity_at',
+      })
+    );
+
+    const responses = await Promise.all(requests);
+    const allConversations = responses.flatMap(
+      ({ data }) => data?.data?.payload || data?.payload || []
+    );
+
+    state.conversations = allConversations;
+  } catch {
     state.error = t('KANBAN.ERROR_LOAD');
   } finally {
     state.loading = false;

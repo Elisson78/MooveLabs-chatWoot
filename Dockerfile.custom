@@ -1,15 +1,26 @@
-FROM chatwoot/chatwoot:latest
+# Stage 1: Build do frontend com Node
+FROM node:20-alpine AS builder
 
-# Copia apenas o dashboard com as mudanças de frontend (Kanban/Funil)
-COPY app/javascript/dashboard /app/javascript/dashboard
+RUN corepack enable && corepack prepare pnpm@10.2.0 --activate
 
 WORKDIR /app
 
-# Rebuild do frontend para incluir as alterações do Kanban
-# Instala pnpm via script oficial (npm não está presente na imagem base)
-ENV PNPM_HOME="/root/.local/share/pnpm"
-ENV PATH="${PNPM_HOME}:${PATH}"
-RUN curl -fsSL https://get.pnpm.io/install.sh | env PNPM_VERSION=10.2.0 SHELL=/bin/sh sh - \
-  && pnpm install --frozen-lockfile \
-  && pnpm build
+# Copia package files primeiro para cache de dependências
+COPY package.json pnpm-lock.yaml ./
 
+# Instala dependências
+RUN pnpm install --frozen-lockfile
+
+# Copia o resto do código (incluindo alterações do Kanban)
+COPY . .
+
+# Build do frontend
+RUN pnpm build
+
+# Stage 2: Imagem final baseada no Chatwoot oficial
+FROM chatwoot/chatwoot:latest
+
+# Copia os assets buildados do stage anterior
+COPY --from=builder /app/public/packs /app/public/packs
+COPY --from=builder /app/public/vite /app/public/vite
+COPY --from=builder /app/app/javascript /app/app/javascript

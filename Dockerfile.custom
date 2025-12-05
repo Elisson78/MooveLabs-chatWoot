@@ -14,13 +14,12 @@ RUN pnpm install --frozen-lockfile
 # Copia o resto do código (incluindo alterações do Kanban)
 COPY . .
 
-# Build do frontend
-RUN pnpm build
+# Build do frontend com Vite
+RUN pnpm exec vite build
 
 # Stage 2: Imagem final baseada no Chatwoot oficial
 FROM chatwoot/chatwoot:latest
 
 # Copia os assets buildados do stage anterior
-COPY --from=builder /app/public/packs /app/public/packs
 COPY --from=builder /app/public/vite /app/public/vite
 COPY --from=builder /app/app/javascript /app/app/javascript

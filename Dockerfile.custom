@@ -14,7 +14,8 @@ RUN pnpm install --frozen-lockfile
 # Copia o resto do código (incluindo alterações do Kanban)
 COPY . .
 
-# Build do frontend com Vite
+# Build do frontend com Vite (aumenta memória do Node)
+ENV NODE_OPTIONS="--max-old-space-size=4096"
 RUN pnpm exec vite build
 
 # Stage 2: Imagem final baseada no Chatwoot oficial

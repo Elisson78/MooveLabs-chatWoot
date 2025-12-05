@@ -6,5 +6,7 @@ COPY app/javascript/dashboard /app/javascript/dashboard
 WORKDIR /app
 
 # Rebuild do frontend para incluir as alterações do Kanban
+# Garantir pnpm disponível no container base
+RUN npm install -g pnpm
 RUN pnpm install --frozen-lockfile && pnpm build
 

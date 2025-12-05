@@ -1,0 +1,10 @@
+FROM chatwoot/chatwoot:latest
+
+# Copia apenas o dashboard com as mudanças de frontend (Kanban/Funil)
+COPY app/javascript/dashboard /app/javascript/dashboard
+
+WORKDIR /app
+
+# Rebuild do frontend para incluir as alterações do Kanban
+RUN pnpm install --frozen-lockfile && pnpm build
+

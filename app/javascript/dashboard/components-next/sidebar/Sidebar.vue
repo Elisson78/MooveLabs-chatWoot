@@ -218,6 +218,13 @@ const menuItems = computed(() => {
       ],
     },
     {
+      name: 'Funnel',
+      label: t('SIDEBAR.FUNNEL'),
+      icon: 'i-lucide-kanban',
+      to: accountScopedRoute('funnel_kanban'),
+      activeOn: ['funnel_kanban'],
+    },
+    {
       name: 'Captain',
       icon: 'i-woot-captain',
       label: t('SIDEBAR.CAPTAIN'),

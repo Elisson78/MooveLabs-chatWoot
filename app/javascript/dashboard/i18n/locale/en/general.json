@@ -8,5 +8,21 @@
     "CLOSE": "Close",
     "BETA": "Beta",
     "BETA_DESCRIPTION": "This feature is in beta and may change as we improve it."
+  },
+  "KANBAN": {
+    "TITLE": "Pipeline (Kanban)",
+    "SUBTITLE": "Glissez les conversations entre les colonnes pour mettre à jour le statut.",
+    "REFRESH": "Rafraîchir",
+    "COLUMNS": {
+      "PENDING": "Nouveau lead",
+      "OPEN": "En cours",
+      "WAITING": "En attente client",
+      "RESOLVED": "Fermé"
+    },
+    "EMPTY_COLUMN": "Aucune conversation ici.",
+    "NO_NAME": "Sans nom",
+    "NO_MESSAGE": "Aucun message.",
+    "ERROR_LOAD": "Impossible de charger les conversations.",
+    "ERROR_UPDATE": "Impossible de mettre à jour le statut."
   }
 }

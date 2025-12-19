@@ -824,9 +824,9 @@ watch(
       size="lg"
       @close="editingCard = null"
     >
-      <div v-if="editingCard" class="flex flex-col gap-6 max-h-[80vh] overflow-y-auto pr-2">
+      <div v-if="editingCard" class="flex flex-col gap-6 max-h-[85vh] overflow-y-auto pr-2 custom-modal-scroll">
         <!-- Header Info -->
-        <div class="flex flex-col gap-1 border-b pb-4">
+        <div class="flex flex-col gap-1 border-b pb-4 sticky top-0 bg-white z-10">
           <h2 class="text-xl font-bold text-n-strong">
             {{ editingCard.meta?.sender?.name || t('KANBAN.NO_NAME') }}
           </h2>
@@ -835,119 +835,119 @@ watch(
           </p>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div class="flex flex-col gap-6">
-            <div class="grid grid-cols-2 gap-4">
-              <div>
-                <label class="block text-sm font-medium text-n-slate-12 mb-2">
-                  {{ t('KANBAN.CARD_COLOR') }}
-                </label>
-                <ColorPicker v-model="editingCard.cardColor" />
-              </div>
-
-              <div>
-                <label class="block text-sm font-medium text-n-slate-12 mb-2">
-                  {{ t('KANBAN.CARD_LABELS') }}
-                </label>
-                <div
-                  class="flex flex-wrap gap-2 max-h-32 overflow-y-auto p-2 border border-n-weak rounded bg-n-solid-1"
-                >
-                  <label
-                    v-for="label in accountLabels"
-                    :key="label.id"
-                    class="flex items-center gap-2 cursor-pointer hover:bg-white/50 p-1 rounded transition-colors"
-                  >
-                    <input
-                      type="checkbox"
-                      :checked="editingCard.selectedLabels?.includes(label.title)"
-                      @change="
-                        e => {
-                          if (!editingCard.selectedLabels)
-                            editingCard.selectedLabels = [];
-                          if (e.target.checked) {
-                            if (!editingCard.selectedLabels.includes(label.title)) {
-                              editingCard.selectedLabels.push(label.title);
-                            }
-                          } else {
-                            editingCard.selectedLabels =
-                              editingCard.selectedLabels.filter(
-                                l => l !== label.title
-                              );
-                          }
-                        }
-                      "
-                    />
-                    <span
-                      class="px-2 py-0.5 text-[10px] font-medium rounded-full text-white"
-                      :style="getLabelStyle(label.title)"
-                    >
-                      {{ label.title }}
-                    </span>
-                  </label>
-                </div>
-              </div>
-            </div>
-
-            <!-- Observations Field -->
+        <div class="flex flex-col gap-6">
+          <!-- Top Row: Color and Labels -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label class="block text-sm font-medium text-n-slate-12 mb-2">
-                {{ t('KANBAN.OBSERVATIONS') }}
+                {{ t('KANBAN.CARD_COLOR') }}
               </label>
-              <textarea
-                v-model="editingCard.observations"
-                class="w-full rounded-md border border-n-weak bg-white p-2 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
-                rows="4"
-                :placeholder="t('KANBAN.OBSERVATIONS')"
-              ></textarea>
+              <ColorPicker v-model="editingCard.cardColor" />
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-n-slate-12 mb-2">
+                {{ t('KANBAN.CARD_LABELS') }}
+              </label>
+              <div
+                class="flex flex-wrap gap-2 max-h-32 overflow-y-auto p-3 border border-n-weak rounded-md bg-n-solid-1 shadow-sm"
+              >
+                <label
+                  v-for="label in accountLabels"
+                  :key="label.id"
+                  class="flex items-center gap-2 cursor-pointer hover:bg-white/50 p-1 rounded-md transition-colors"
+                >
+                  <input
+                    type="checkbox"
+                    :checked="editingCard.selectedLabels?.includes(label.title)"
+                    @change="
+                      e => {
+                        if (!editingCard.selectedLabels)
+                          editingCard.selectedLabels = [];
+                        if (e.target.checked) {
+                          if (!editingCard.selectedLabels.includes(label.title)) {
+                            editingCard.selectedLabels.push(label.title);
+                          }
+                        } else {
+                          editingCard.selectedLabels =
+                            editingCard.selectedLabels.filter(
+                              l => l !== label.title
+                            );
+                        }
+                      }
+                    "
+                  />
+                  <span
+                    class="px-2 py-0.5 text-[10px] font-medium rounded-full text-white shadow-sm"
+                    :style="getLabelStyle(label.title)"
+                  >
+                    {{ label.title }}
+                  </span>
+                </label>
+              </div>
             </div>
           </div>
 
+          <!-- Observations Field -->
+          <div class="border-t pt-4">
+            <label class="block text-sm font-medium text-n-slate-12 mb-2">
+              {{ t('KANBAN.OBSERVATIONS') }}
+            </label>
+            <textarea
+              v-model="editingCard.observations"
+              class="w-full rounded-md border border-n-weak bg-white p-3 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 transition-shadow focus:shadow-md"
+              rows="3"
+              :placeholder="t('KANBAN.OBSERVATIONS')"
+            ></textarea>
+          </div>
+
           <!-- Message History -->
-          <div class="flex flex-col gap-4">
-            <h3 class="text-sm font-semibold text-n-strong border-b pb-2">
+          <div class="flex flex-col gap-4 border-t pt-4">
+            <h3 class="text-sm font-semibold text-n-strong">
               {{ t('KANBAN.MESSAGE_HISTORY') }}
             </h3>
-            <div class="flex flex-col gap-3 max-h-[350px] overflow-y-auto p-2 bg-n-solid-1 rounded shadow-inner">
+            <div class="flex flex-col gap-3 max-h-[400px] overflow-y-auto p-4 bg-n-solid-1 rounded-lg shadow-inner border border-n-weak">
               <div
                 v-for="message in conversationMessages[editingCard.id]"
                 :key="message.id"
-                class="flex flex-col gap-1 p-2 rounded-lg max-w-[90%] self-center text-center"
+                class="flex flex-col gap-1 p-3 rounded-xl max-w-[85%] self-center text-center shadow-sm"
                 :class="[
                   message.message_type === 1 ? 'bg-blue-50 border border-blue-100' : 'bg-white border border-n-weak',
-                  message.private ? 'bg-amber-50 border-amber-100 shadow-sm' : ''
+                  message.private ? 'bg-amber-50 border-amber-100' : ''
                 ]"
               >
-                <p class="text-[11px] font-bold" :class="message.message_type === 1 ? 'text-blue-700' : 'text-n-strong'">
+                <p class="text-[10px] font-bold uppercase tracking-wider" :class="message.message_type === 1 ? 'text-blue-600' : 'text-n-slate-11'">
                   {{ message.sender?.name || (message.message_type === 1 ? 'Agent' : 'Customer') }}
-                  <span v-if="message.private" class="ml-1 text-[9px] uppercase tracking-wider text-amber-700 font-black">[Note]</span>
+                  <span v-if="message.private" class="ml-2 text-[9px] text-amber-700 font-black">[Nota Privada]</span>
                 </p>
-                <div class="text-xs text-n-slate-12 whitespace-pre-wrap break-words" v-html="message.content"></div>
+                <div class="text-sm text-n-slate-12 whitespace-pre-wrap break-words leading-relaxed" v-html="message.content"></div>
               </div>
-              <p v-if="!conversationMessages[editingCard.id]?.length" class="text-xs text-n-slate-11 text-center py-10 italic">
+              <p v-if="!conversationMessages[editingCard.id]?.length" class="text-xs text-n-slate-11 text-center py-12 italic">
                 {{ t('KANBAN.NO_MESSAGE') }}
               </p>
             </div>
+          </div>
 
-            <!-- Send Reply -->
-            <div class="flex flex-col gap-2 border-t pt-4">
-              <div class="flex items-center justify-between mb-1">
-                 <h4 class="text-xs font-semibold text-n-strong">{{ t('KANBAN.SEND_REPLY') }}</h4>
-                 <div class="flex items-center gap-2">
-                    <label class="flex items-center gap-1 text-[10px] cursor-pointer">
-                      <input type="checkbox" v-model="replyState.isPrivate" />
-                      {{ t('KANBAN.REPLY_TYPE_NOTE') }}
-                    </label>
-                 </div>
-              </div>
-              <textarea
-                v-model="replyState.text"
-                class="w-full rounded-md border border-n-weak bg-white p-2 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
-                rows="3"
-                :placeholder="t('KANBAN.SEND_REPLY')"
-              ></textarea>
+          <!-- Send Reply -->
+          <div class="flex flex-col gap-3 border-t pt-4 bg-white sticky bottom-0 z-10 pb-2">
+            <div class="flex items-center justify-between">
+               <h4 class="text-sm font-semibold text-n-strong">{{ t('KANBAN.SEND_REPLY') }}</h4>
+               <label class="flex items-center gap-2 text-xs cursor-pointer text-amber-700 font-medium hover:text-amber-800 transition-colors">
+                  <input type="checkbox" v-model="replyState.isPrivate" class="rounded text-amber-600" />
+                  {{ t('KANBAN.REPLY_TYPE_NOTE') }}
+               </label>
+            </div>
+            <textarea
+              v-model="replyState.text"
+              class="w-full rounded-md border border-n-weak bg-white p-3 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 transition-shadow focus:shadow-md"
+              rows="2"
+              :placeholder="t('KANBAN.SEND_REPLY')"
+            ></textarea>
+            <div class="flex justify-end">
               <Button
                 size="sm"
                 color="blue"
+                class="min-w-[100px]"
                 :loading="replyState.loading"
                 @click="sendReply"
               >

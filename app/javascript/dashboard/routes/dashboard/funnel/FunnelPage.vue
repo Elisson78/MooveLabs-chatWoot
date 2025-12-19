@@ -367,7 +367,17 @@ const updateColumnColor = (key, colorIndex) => {
 
 const getColumnColor = colorIndex => {
   const color = defaultColors[colorIndex % defaultColors.length];
-  return `${color.bg} ${color.text} ${color.border}`;
+  return {
+    backgroundColor: color.hex,
+    borderColor: `${color.hex}cc`, // Slightly darker for border
+  };
+};
+
+const getColumnHeaderStyle = colorIndex => {
+  const color = defaultColors[colorIndex % defaultColors.length];
+  return {
+    color: color.hex.includes('100') ? '#451a03' : '#1e3a8a', // Fallback colors or logic
+  };
 };
 
 const getCardColor = conversation => {
@@ -570,11 +580,8 @@ watch(
       <div
         v-for="column in columns"
         :key="column.key"
-        class="flex flex-col gap-3 rounded-lg border bg-n-solid-1 p-3 min-w-[280px] max-w-[280px] flex-shrink-0"
-        :class="[
-          getColumnColor(column.colorIndex),
-          `border-${defaultColors[column.colorIndex % defaultColors.length].border.split('-')[2]}-200`,
-        ]"
+        class="flex flex-col gap-3 rounded-lg border bg-n-solid-1 p-3 min-w-[300px] max-w-[300px] flex-shrink-0 h-full overflow-hidden"
+        :style="getColumnColor(column.colorIndex)"
       >
         <div class="flex items-center justify-between gap-2">
           <input
@@ -601,7 +608,7 @@ watch(
         </div>
 
         <div
-          class="flex flex-col gap-2 min-h-[200px] rounded-md bg-white/50 dark:bg-black/20 p-2 border border-dashed transition-colors"
+          class="flex flex-col gap-2 flex-1 rounded-md bg-white/50 dark:bg-black/20 p-2 border border-dashed transition-colors overflow-y-auto kanban-column-scroll"
           :class="
             draggingOverColumn === column.key
               ? 'border-n-strong bg-white/70 dark:bg-black/30'
@@ -821,6 +828,11 @@ article:hover .card-actions {
 
 .kanban-card-colored {
   border-left-width: 4px;
+}
+
+.kanban-column-scroll {
+  scrollbar-width: thin;
+  padding-bottom: 20px;
 }
 
 .kanban-scroll {

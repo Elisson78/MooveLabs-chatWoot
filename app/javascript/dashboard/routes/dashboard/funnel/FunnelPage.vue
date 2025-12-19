@@ -9,6 +9,7 @@ import Dialog from 'dashboard/components-next/dialog/Dialog.vue';
 import ColorPicker from 'dashboard/components-next/colorpicker/ColorPicker.vue';
 import ConversationApi from 'dashboard/api/inbox/conversation';
 import ConversationLabelsAPI from 'dashboard/api/conversations';
+import MessageApi from 'dashboard/api/inbox/message';
 import ComposeConversation from 'dashboard/components-next/NewConversation/ComposeConversation.vue';
 
 const { t } = useI18n();
@@ -177,6 +178,13 @@ const reverseStatusMapping = {
 // Labels
 const accountLabels = computed(() => getters['labels/getLabels'].value || []);
 const conversationLabels = reactive({});
+const conversationMessages = reactive({});
+
+const replyState = reactive({
+  text: '',
+  isPrivate: false,
+  loading: false,
+});
 
 // Carregar labels das conversas
 const loadConversationLabels = async () => {
@@ -387,12 +395,22 @@ const getCardColor = conversation => {
 };
 
 // Editar card
-const editCard = conversation => {
+const editCard = async conversation => {
   editingCard.value = { ...conversation };
   editingCard.value.cardColor = getCardColor(conversation);
   editingCard.value.selectedLabels = [
     ...(conversationLabels[conversation.id] || []),
   ];
+
+  // Carregar mensagens
+  try {
+    const { data } = await MessageApi.getPreviousMessages({
+      conversationId: conversation.id,
+    });
+    conversationMessages[conversation.id] = data.payload || [];
+  } catch {
+    conversationMessages[conversation.id] = conversation.messages || [];
+  }
 };
 
 const saveCard = async () => {
@@ -436,6 +454,51 @@ const saveCard = async () => {
 
   cardEditDialogRef.value?.close();
   editingCard.value = null;
+};
+
+const deleteConversation = async () => {
+  if (!editingCard.value) return;
+  if (!window.confirm(t('KANBAN.DELETE_CONFIRM'))) return;
+
+  try {
+    await ConversationApi.delete(editingCard.value.id);
+    state.conversations = state.conversations.filter(
+      c => c.id !== editingCard.value.id
+    );
+    cardEditDialogRef.value?.close();
+    editingCard.value = null;
+  } catch {
+    state.error = t('KANBAN.ERROR_UPDATE');
+  }
+};
+
+const sendReply = async () => {
+  if (!editingCard.value || !replyState.text.trim()) return;
+
+  replyState.loading = true;
+  try {
+    const payload = {
+      conversationId: editingCard.value.id,
+      message: replyState.text,
+      private: replyState.isPrivate,
+    };
+    // Use store to send message for better UI sync
+    await store.dispatch('conversations/sendMessageWithData', {
+      conversation_id: editingCard.value.id,
+      content: replyState.text,
+      private: replyState.isPrivate,
+    });
+
+    // Refresh messages locally
+    const { data } = await ConversationApi.getMessages(editingCard.value.id);
+    conversationMessages[editingCard.value.id] = data.payload || [];
+
+    replyState.text = '';
+  } catch {
+    // Error handling
+  } finally {
+    replyState.loading = false;
+  }
 };
 
 const getCardLabels = conversationId => {
@@ -659,10 +722,14 @@ watch(
               </span>
             </div>
 
-            <p class="text-xs text-n-slate-11 line-clamp-2">
+            <!-- Sender Identification -->
+            <p class="text-xs font-medium text-n-slate-12 truncate mt-1">
               {{ conversation.meta?.sender?.name || t('KANBAN.NO_NAME') }}
             </p>
-            <p class="text-xs text-n-slate-11 line-clamp-2 mt-1">
+            <p class="text-[10px] text-n-slate-11 truncate">
+              {{ conversation.meta?.sender?.email || conversation.meta?.sender?.phone_number || '' }}
+            </p>
+            <p class="text-xs text-n-slate-10 line-clamp-2 mt-1 italic">
               {{ lastMessageContent(conversation) || t('KANBAN.NO_MESSAGE') }}
             </p>
           </article>
@@ -742,67 +809,148 @@ watch(
       :title="t('KANBAN.EDIT_CARD')"
       :show-confirm-button="false"
       :show-cancel-button="false"
+      size="lg"
       @close="editingCard = null"
     >
-      <div v-if="editingCard" class="flex flex-col gap-4">
-        <div>
-          <label class="block text-sm font-medium text-n-slate-12 mb-2">
-            {{ t('KANBAN.CARD_COLOR') }}
-          </label>
-          <ColorPicker v-model="editingCard.cardColor" />
+      <div v-if="editingCard" class="flex flex-col gap-6 max-h-[80vh] overflow-y-auto pr-2">
+        <!-- Header Info -->
+        <div class="flex flex-col gap-1 border-b pb-4">
+          <h2 class="text-xl font-bold text-n-strong">
+            {{ editingCard.meta?.sender?.name || t('KANBAN.NO_NAME') }}
+          </h2>
+          <p class="text-sm text-n-slate-11">
+            {{ editingCard.meta?.sender?.email || editingCard.meta?.sender?.phone_number || '' }}
+          </p>
         </div>
 
-        <div>
-          <label class="block text-sm font-medium text-n-slate-12 mb-2">
-            {{ t('KANBAN.CARD_LABELS') }}
-          </label>
-          <div
-            class="flex flex-wrap gap-2 max-h-40 overflow-y-auto p-2 border border-n-weak rounded"
-          >
-            <label
-              v-for="label in accountLabels"
-              :key="label.id"
-              class="flex items-center gap-2 cursor-pointer"
-            >
-              <input
-                type="checkbox"
-                :checked="editingCard.selectedLabels?.includes(label.title)"
-                @change="
-                  e => {
-                    if (!editingCard.selectedLabels)
-                      editingCard.selectedLabels = [];
-                    if (e.target.checked) {
-                      if (!editingCard.selectedLabels.includes(label.title)) {
-                        editingCard.selectedLabels.push(label.title);
-                      }
-                    } else {
-                      editingCard.selectedLabels =
-                        editingCard.selectedLabels.filter(
-                          l => l !== label.title
-                        );
-                    }
-                  }
-                "
-              />
-              <span
-                class="px-2 py-1 text-xs font-medium rounded-full text-white"
-                :style="getLabelStyle(label.title)"
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="flex flex-col gap-4">
+            <div>
+              <label class="block text-sm font-medium text-n-slate-12 mb-2">
+                {{ t('KANBAN.CARD_COLOR') }}
+              </label>
+              <ColorPicker v-model="editingCard.cardColor" />
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-n-slate-12 mb-2">
+                {{ t('KANBAN.CARD_LABELS') }}
+              </label>
+              <div
+                class="flex flex-wrap gap-2 max-h-40 overflow-y-auto p-2 border border-n-weak rounded bg-n-solid-1"
               >
-                {{ label.title }}
-              </span>
-            </label>
+                <label
+                  v-for="label in accountLabels"
+                  :key="label.id"
+                  class="flex items-center gap-2 cursor-pointer hover:bg-white/50 p-1 rounded transition-colors"
+                >
+                  <input
+                    type="checkbox"
+                    :checked="editingCard.selectedLabels?.includes(label.title)"
+                    @change="
+                      e => {
+                        if (!editingCard.selectedLabels)
+                          editingCard.selectedLabels = [];
+                        if (e.target.checked) {
+                          if (!editingCard.selectedLabels.includes(label.title)) {
+                            editingCard.selectedLabels.push(label.title);
+                          }
+                        } else {
+                          editingCard.selectedLabels =
+                            editingCard.selectedLabels.filter(
+                              l => l !== label.title
+                            );
+                        }
+                      }
+                    "
+                  />
+                  <span
+                    class="px-2 py-0.5 text-[10px] font-medium rounded-full text-white"
+                    :style="getLabelStyle(label.title)"
+                  >
+                    {{ label.title }}
+                  </span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Vertical Divider -->
+          <div class="flex flex-col gap-4">
+            <h3 class="text-sm font-semibold text-n-strong border-b pb-2">
+              {{ t('KANBAN.MESSAGE_HISTORY') }}
+            </h3>
+            <div class="flex flex-col gap-3 max-h-[300px] overflow-y-auto p-2 bg-n-solid-1 rounded shadow-inner">
+              <div
+                v-for="message in conversationMessages[editingCard.id]"
+                :key="message.id"
+                class="flex flex-col gap-1 p-2 rounded-lg max-w-[90%]"
+                :class="[
+                  message.message_type === 1 ? 'self-end bg-blue-50 border border-blue-100' : 'self-start bg-white border border-n-weak',
+                  message.private ? 'bg-amber-50 border-amber-100 shadow-sm' : ''
+                ]"
+              >
+                <p class="text-[11px] font-bold" :class="message.message_type === 1 ? 'text-blue-700' : 'text-n-strong'">
+                  {{ message.sender?.name || (message.message_type === 1 ? 'Agent' : 'Customer') }}
+                  <span v-if="message.private" class="ml-1 text-[9px] uppercase tracking-wider text-amber-700 font-black">[Note]</span>
+                </p>
+                <div class="text-xs text-n-slate-12 whitespace-pre-wrap break-words" v-html="message.content"></div>
+              </div>
+              <p v-if="!conversationMessages[editingCard.id]?.length" class="text-xs text-n-slate-11 text-center py-10 italic">
+                {{ t('KANBAN.NO_MESSAGE') }}
+              </p>
+            </div>
+
+            <!-- Send Reply -->
+            <div class="flex flex-col gap-2 border-t pt-4">
+              <div class="flex items-center justify-between mb-1">
+                 <h4 class="text-xs font-semibold text-n-strong">{{ t('KANBAN.SEND_REPLY') }}</h4>
+                 <div class="flex items-center gap-2">
+                    <label class="flex items-center gap-1 text-[10px] cursor-pointer">
+                      <input type="checkbox" v-model="replyState.isPrivate" />
+                      {{ t('KANBAN.REPLY_TYPE_NOTE') }}
+                    </label>
+                 </div>
+              </div>
+              <textarea
+                v-model="replyState.text"
+                class="w-full rounded-md border border-n-weak bg-white p-2 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
+                rows="3"
+                :placeholder="t('KANBAN.SEND_REPLY')"
+              ></textarea>
+              <Button
+                size="sm"
+                color="blue"
+                :loading="replyState.loading"
+                @click="sendReply"
+              >
+                {{ t('KANBAN.SEND') }}
+              </Button>
+            </div>
           </div>
         </div>
       </div>
       <template #footer>
-        <div class="flex justify-end gap-2 w-full">
+        <div class="flex justify-between items-center w-full">
           <Button
-            variant="faded"
-            color="slate"
-            label="Annuler"
-            @click="cardEditDialogRef?.close()"
-          />
-          <Button color="blue" label="Enregistrer" @click="saveCard" />
+            variant="ghost"
+            color="ruby"
+            size="sm"
+            icon="i-lucide-trash-2"
+            @click="deleteConversation"
+          >
+            {{ t('KANBAN.DELETE') }}
+          </Button>
+          <div class="flex justify-end gap-2">
+            <Button
+              variant="faded"
+              color="slate"
+              size="sm"
+              label="Annuler"
+              @click="cardEditDialogRef?.close()"
+            />
+            <Button color="blue" size="sm" label="Enregistrer" @click="saveCard" />
+          </div>
         </div>
       </template>
     </Dialog>

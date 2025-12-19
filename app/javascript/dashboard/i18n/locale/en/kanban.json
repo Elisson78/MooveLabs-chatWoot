@@ -21,6 +21,13 @@
             "OPEN": "Open",
             "WAITING": "Waiting",
             "RESOLVED": "Resolved"
-        }
+        },
+        "DELETE": "Delete Conversation",
+        "DELETE_CONFIRM": "Are you sure you want to delete this conversation?",
+        "MESSAGE_HISTORY": "Message History",
+        "SEND_REPLY": "Send Reply",
+        "REPLY_TYPE_NOTE": "Private Note",
+        "REPLY_TYPE_MESSAGE": "Message",
+        "SEND": "Send"
     }
 }

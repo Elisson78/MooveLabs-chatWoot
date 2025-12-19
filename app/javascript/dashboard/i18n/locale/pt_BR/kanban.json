@@ -21,6 +21,13 @@
             "OPEN": "Aberto",
             "WAITING": "Aguardando",
             "RESOLVED": "Resolvido"
-        }
+        },
+        "DELETE": "Excluir Conversa",
+        "DELETE_CONFIRM": "Tem certeza que deseja excluir esta conversa?",
+        "MESSAGE_HISTORY": "Histórico de Mensagens",
+        "SEND_REPLY": "Enviar Resposta",
+        "REPLY_TYPE_NOTE": "Nota Privada",
+        "REPLY_TYPE_MESSAGE": "Mensagem",
+        "SEND": "Enviar"
     }
 }

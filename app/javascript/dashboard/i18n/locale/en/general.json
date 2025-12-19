@@ -14,6 +14,13 @@
     "SUBTITLE": "Glissez les conversations entre les colonnes pour mettre à jour le statut.",
     "REFRESH": "Rafraîchir",
     "CREATE_CONVERSATION": "Nouvelle conversation",
+    "SETTINGS": "Paramètres",
+    "ADD_COLUMN": "Ajouter une colonne",
+    "NEW_COLUMN": "Nouvelle colonne",
+    "COLUMN_SETTINGS": "Paramètres des colonnes",
+    "EDIT_CARD": "Modifier la carte",
+    "CARD_COLOR": "Couleur de la carte",
+    "CARD_LABELS": "Étiquettes",
     "COLUMNS": {
       "PENDING": "Nouveau lead",
       "OPEN": "En cours",

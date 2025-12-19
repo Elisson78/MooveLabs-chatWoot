@@ -104,38 +104,60 @@ const saveColumnConfig = config => {
   localStorage.setItem(`kanban-columns-${accountId}`, JSON.stringify(config));
 };
 
-// Configuração inicial das colunas
-const savedConfig = loadColumnConfig();
-const defaultColumns = [
+// Configuração inicial das colunas - usar valores padrão sem tradução inicialmente
+const getDefaultColumns = () => [
   {
     key: 'pending',
-    title: t('KANBAN.COLUMNS.PENDING'),
+    title: 'Nouveau lead',
     status: 'pending',
     colorIndex: 0,
   },
   {
     key: 'open',
-    title: t('KANBAN.COLUMNS.OPEN'),
+    title: 'En cours',
     status: 'open',
     colorIndex: 1,
   },
   {
     key: 'waiting',
-    title: t('KANBAN.COLUMNS.WAITING'),
+    title: 'En attente client',
     status: 'snoozed',
     colorIndex: 2,
   },
   {
     key: 'resolved',
-    title: t('KANBAN.COLUMNS.RESOLVED'),
+    title: 'Fermé',
     status: 'resolved',
     colorIndex: 3,
   },
 ];
 
+const savedConfig = loadColumnConfig();
+const defaultColumns = getDefaultColumns();
+
+// Inicializar colunas com valores padrão ou salvos
 const columns = ref(
   savedConfig && savedConfig.length > 0 ? savedConfig : defaultColumns
 );
+
+// Atualizar títulos com traduções após montagem
+const updateColumnTitles = () => {
+  if (!savedConfig) {
+    // Só atualiza se não houver configuração salva (usuário não renomeou)
+    columns.value = columns.value.map(col => {
+      const translations = {
+        pending: t('KANBAN.COLUMNS.PENDING'),
+        open: t('KANBAN.COLUMNS.OPEN'),
+        waiting: t('KANBAN.COLUMNS.WAITING'),
+        resolved: t('KANBAN.COLUMNS.RESOLVED'),
+      };
+      if (translations[col.key]) {
+        return { ...col, title: translations[col.key] };
+      }
+      return col;
+    });
+  }
+};
 
 // Mapeamento: 'waiting' no frontend mapeia para 'snoozed' no backend
 const statusMapping = {
@@ -177,7 +199,7 @@ const fetchConversations = async () => {
   try {
     // Garantir que temos colunas válidas
     if (!columns.value || columns.value.length === 0) {
-      columns.value = defaultColumns;
+      columns.value = getDefaultColumns();
     }
 
     const statuses = columns.value.map(col => col.status).filter(Boolean);
@@ -430,8 +452,17 @@ const lastMessageContent = conversation => {
 
 // Carregar labels do account
 onMounted(async () => {
-  await store.dispatch('labels/get');
-  await fetchConversations();
+  try {
+    // Atualizar títulos das colunas com traduções
+    updateColumnTitles();
+    await store.dispatch('labels/get');
+    await fetchConversations();
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error('Erro ao inicializar kanban:', error);
+    state.error = t('KANBAN.ERROR_LOAD');
+    state.loading = false;
+  }
 });
 
 // Salvar configurações quando colunas mudarem

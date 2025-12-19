@@ -175,8 +175,19 @@ const fetchConversations = async () => {
   state.loading = true;
   state.error = '';
   try {
-    const statuses = columns.value.map(col => col.status);
+    // Garantir que temos colunas válidas
+    if (!columns.value || columns.value.length === 0) {
+      columns.value = defaultColumns;
+    }
+
+    const statuses = columns.value.map(col => col.status).filter(Boolean);
     const uniqueStatuses = [...new Set(statuses)];
+
+    if (uniqueStatuses.length === 0) {
+      state.conversations = [];
+      state.loading = false;
+      return;
+    }
 
     const requests = uniqueStatuses.map(status =>
       ConversationApi.get({
@@ -208,8 +219,11 @@ const fetchConversations = async () => {
     });
 
     await loadConversationLabels();
-  } catch {
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error('Erro ao carregar conversas do kanban:', error);
     state.error = t('KANBAN.ERROR_LOAD');
+    state.conversations = [];
   } finally {
     state.loading = false;
   }

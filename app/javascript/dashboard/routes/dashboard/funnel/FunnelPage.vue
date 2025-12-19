@@ -84,9 +84,9 @@ const editingCard = ref(null);
 
 // Carregar configurações do localStorage
 const loadColumnConfig = () => {
-  const saved = localStorage.getItem(
-    `kanban-columns-${route.params.accountId}`
-  );
+  const accountId = route?.params?.accountId;
+  if (!accountId) return null;
+  const saved = localStorage.getItem(`kanban-columns-${accountId}`);
   if (saved) {
     try {
       return JSON.parse(saved);
@@ -99,10 +99,9 @@ const loadColumnConfig = () => {
 
 // Salvar configurações no localStorage
 const saveColumnConfig = config => {
-  localStorage.setItem(
-    `kanban-columns-${route.params.accountId}`,
-    JSON.stringify(config)
-  );
+  const accountId = route?.params?.accountId;
+  if (!accountId) return;
+  localStorage.setItem(`kanban-columns-${accountId}`, JSON.stringify(config));
 };
 
 // Configuração inicial das colunas
@@ -134,7 +133,9 @@ const defaultColumns = [
   },
 ];
 
-const columns = ref(savedConfig || defaultColumns);
+const columns = ref(
+  savedConfig && savedConfig.length > 0 ? savedConfig : defaultColumns
+);
 
 // Mapeamento: 'waiting' no frontend mapeia para 'snoozed' no backend
 const statusMapping = {

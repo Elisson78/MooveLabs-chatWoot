@@ -28,6 +28,7 @@
         "SEND_REPLY": "Enviar Resposta",
         "REPLY_TYPE_NOTE": "Nota Privada",
         "REPLY_TYPE_MESSAGE": "Mensagem",
-        "SEND": "Enviar"
+        "SEND": "Enviar",
+        "OBSERVATIONS": "Observações"
     }
 }

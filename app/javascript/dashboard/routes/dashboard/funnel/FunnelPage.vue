@@ -401,6 +401,8 @@ const editCard = async conversation => {
   editingCard.value.selectedLabels = [
     ...(conversationLabels[conversation.id] || []),
   ];
+  editingCard.value.observations =
+    conversation.custom_attributes?.card_observations || '';
 
   // Carregar mensagens
   try {
@@ -416,19 +418,22 @@ const editCard = async conversation => {
 const saveCard = async () => {
   if (!editingCard.value) return;
 
-  // Salvar cor do card (pode ser salvo em customAttributes)
-  if (editingCard.value.cardColor) {
-    try {
-      await ConversationApi.updateCustomAttributes({
-        conversationId: editingCard.value.id,
-        customAttributes: {
-          ...editingCard.value.custom_attributes,
-          card_color: editingCard.value.cardColor,
-        },
-      });
-    } catch {
-      // Ignorar erro
-    }
+  // Salvar custom attributes (cor do card e observações)
+  try {
+    const customAttributes = {
+      ...editingCard.value.custom_attributes,
+      card_color: editingCard.value.cardColor,
+      card_observations: editingCard.value.observations,
+    };
+
+    await ConversationApi.updateCustomAttributes({
+      conversationId: editingCard.value.id,
+      customAttributes,
+    });
+    // Atualizar o objeto original para refletir as mudanças
+    editingCard.value.custom_attributes = customAttributes;
+  } catch {
+    // Ignorar erro
   }
 
   // Salvar labels
@@ -732,6 +737,13 @@ watch(
             <p class="text-xs text-n-slate-10 line-clamp-2 mt-1 italic">
               {{ lastMessageContent(conversation) || t('KANBAN.NO_MESSAGE') }}
             </p>
+            <div
+              v-if="conversation.custom_attributes?.card_observations"
+              class="mt-2 text-[10px] text-n-slate-11 bg-n-solid-1 p-1 rounded border border-n-weak line-clamp-2"
+            >
+              <i class="i-lucide-sticky-note mr-1 inline-block align-middle" />
+              {{ conversation.custom_attributes.card_observations }}
+            </div>
           </article>
 
           <p
@@ -824,69 +836,84 @@ watch(
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div class="flex flex-col gap-4">
-            <div>
-              <label class="block text-sm font-medium text-n-slate-12 mb-2">
-                {{ t('KANBAN.CARD_COLOR') }}
-              </label>
-              <ColorPicker v-model="editingCard.cardColor" />
+          <div class="flex flex-col gap-6">
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-n-slate-12 mb-2">
+                  {{ t('KANBAN.CARD_COLOR') }}
+                </label>
+                <ColorPicker v-model="editingCard.cardColor" />
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-n-slate-12 mb-2">
+                  {{ t('KANBAN.CARD_LABELS') }}
+                </label>
+                <div
+                  class="flex flex-wrap gap-2 max-h-32 overflow-y-auto p-2 border border-n-weak rounded bg-n-solid-1"
+                >
+                  <label
+                    v-for="label in accountLabels"
+                    :key="label.id"
+                    class="flex items-center gap-2 cursor-pointer hover:bg-white/50 p-1 rounded transition-colors"
+                  >
+                    <input
+                      type="checkbox"
+                      :checked="editingCard.selectedLabels?.includes(label.title)"
+                      @change="
+                        e => {
+                          if (!editingCard.selectedLabels)
+                            editingCard.selectedLabels = [];
+                          if (e.target.checked) {
+                            if (!editingCard.selectedLabels.includes(label.title)) {
+                              editingCard.selectedLabels.push(label.title);
+                            }
+                          } else {
+                            editingCard.selectedLabels =
+                              editingCard.selectedLabels.filter(
+                                l => l !== label.title
+                              );
+                          }
+                        }
+                      "
+                    />
+                    <span
+                      class="px-2 py-0.5 text-[10px] font-medium rounded-full text-white"
+                      :style="getLabelStyle(label.title)"
+                    >
+                      {{ label.title }}
+                    </span>
+                  </label>
+                </div>
+              </div>
             </div>
 
+            <!-- Observations Field -->
             <div>
               <label class="block text-sm font-medium text-n-slate-12 mb-2">
-                {{ t('KANBAN.CARD_LABELS') }}
+                {{ t('KANBAN.OBSERVATIONS') }}
               </label>
-              <div
-                class="flex flex-wrap gap-2 max-h-40 overflow-y-auto p-2 border border-n-weak rounded bg-n-solid-1"
-              >
-                <label
-                  v-for="label in accountLabels"
-                  :key="label.id"
-                  class="flex items-center gap-2 cursor-pointer hover:bg-white/50 p-1 rounded transition-colors"
-                >
-                  <input
-                    type="checkbox"
-                    :checked="editingCard.selectedLabels?.includes(label.title)"
-                    @change="
-                      e => {
-                        if (!editingCard.selectedLabels)
-                          editingCard.selectedLabels = [];
-                        if (e.target.checked) {
-                          if (!editingCard.selectedLabels.includes(label.title)) {
-                            editingCard.selectedLabels.push(label.title);
-                          }
-                        } else {
-                          editingCard.selectedLabels =
-                            editingCard.selectedLabels.filter(
-                              l => l !== label.title
-                            );
-                        }
-                      }
-                    "
-                  />
-                  <span
-                    class="px-2 py-0.5 text-[10px] font-medium rounded-full text-white"
-                    :style="getLabelStyle(label.title)"
-                  >
-                    {{ label.title }}
-                  </span>
-                </label>
-              </div>
+              <textarea
+                v-model="editingCard.observations"
+                class="w-full rounded-md border border-n-weak bg-white p-2 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
+                rows="4"
+                :placeholder="t('KANBAN.OBSERVATIONS')"
+              ></textarea>
             </div>
           </div>
 
-          <!-- Vertical Divider -->
+          <!-- Message History -->
           <div class="flex flex-col gap-4">
             <h3 class="text-sm font-semibold text-n-strong border-b pb-2">
               {{ t('KANBAN.MESSAGE_HISTORY') }}
             </h3>
-            <div class="flex flex-col gap-3 max-h-[300px] overflow-y-auto p-2 bg-n-solid-1 rounded shadow-inner">
+            <div class="flex flex-col gap-3 max-h-[350px] overflow-y-auto p-2 bg-n-solid-1 rounded shadow-inner">
               <div
                 v-for="message in conversationMessages[editingCard.id]"
                 :key="message.id"
-                class="flex flex-col gap-1 p-2 rounded-lg max-w-[90%]"
+                class="flex flex-col gap-1 p-2 rounded-lg max-w-[90%] self-center text-center"
                 :class="[
-                  message.message_type === 1 ? 'self-end bg-blue-50 border border-blue-100' : 'self-start bg-white border border-n-weak',
+                  message.message_type === 1 ? 'bg-blue-50 border border-blue-100' : 'bg-white border border-n-weak',
                   message.private ? 'bg-amber-50 border-amber-100 shadow-sm' : ''
                 ]"
               >

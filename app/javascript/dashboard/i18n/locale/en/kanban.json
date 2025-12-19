@@ -1,0 +1,26 @@
+{
+    "KANBAN": {
+        "TITLE": "Funnel (Kanban)",
+        "SUBTITLE": "Manage your conversations in a visual pipeline",
+        "SETTINGS": "Column Settings",
+        "CREATE_CONVERSATION": "New Conversation",
+        "REFRESH": "Refresh",
+        "ERROR_LOAD": "Error loading Kanban conversations",
+        "ERROR_UPDATE": "Error updating conversation status",
+        "NEW_COLUMN": "New Column",
+        "ADD_COLUMN": "Add Column",
+        "COLUMN_SETTINGS": "Column Settings",
+        "EDIT_CARD": "Edit Card",
+        "CARD_COLOR": "Card Color",
+        "CARD_LABELS": "Labels",
+        "NO_NAME": "No Name",
+        "NO_MESSAGE": "No message content",
+        "EMPTY_COLUMN": "No conversations here",
+        "COLUMNS": {
+            "PENDING": "Pending",
+            "OPEN": "Open",
+            "WAITING": "Waiting",
+            "RESOLVED": "Resolved"
+        }
+    }
+}

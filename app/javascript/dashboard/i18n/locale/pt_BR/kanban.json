@@ -1,0 +1,26 @@
+{
+    "KANBAN": {
+        "TITLE": "Funil (Kanban)",
+        "SUBTITLE": "Gerencie suas conversas em um pipeline visual",
+        "SETTINGS": "Configurações de Coluna",
+        "CREATE_CONVERSATION": "Nova Conversa",
+        "REFRESH": "Atualizar",
+        "ERROR_LOAD": "Erro ao carregar conversas do Kanban",
+        "ERROR_UPDATE": "Erro ao atualizar status da conversa",
+        "NEW_COLUMN": "Nova Coluna",
+        "ADD_COLUMN": "Adicionar Coluna",
+        "COLUMN_SETTINGS": "Configurações de Coluna",
+        "EDIT_CARD": "Editar Card",
+        "CARD_COLOR": "Cor do Card",
+        "CARD_LABELS": "Etiquetas",
+        "NO_NAME": "Sem Nome",
+        "NO_MESSAGE": "Sem conteúdo de mensagem",
+        "EMPTY_COLUMN": "Sem conversas aqui",
+        "COLUMNS": {
+            "PENDING": "Pendente",
+            "OPEN": "Aberto",
+            "WAITING": "Aguardando",
+            "RESOLVED": "Resolvido"
+        }
+    }
+}

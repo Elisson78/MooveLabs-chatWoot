@@ -13,6 +13,7 @@
     "TITLE": "Pipeline (Kanban)",
     "SUBTITLE": "Glissez les conversations entre les colonnes pour mettre à jour le statut.",
     "REFRESH": "Rafraîchir",
+    "CREATE_CONVERSATION": "Nouvelle conversation",
     "COLUMNS": {
       "PENDING": "Nouveau lead",
       "OPEN": "En cours",

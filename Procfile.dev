@@ -1,4 +1,4 @@
-backend: bin/rails s -p 3000
+backend: POSTGRES_HOST=127.0.0.1 POSTGRES_PORT=5433 bin/rails s -p 3000
 # https://github.com/mperham/sidekiq/issues/3090#issuecomment-389748695
-worker: dotenv bundle exec sidekiq -C config/sidekiq.yml
+worker: POSTGRES_HOST=127.0.0.1 POSTGRES_PORT=5433 REDIS_URL=redis://127.0.0.1:6379 bundle exec sidekiq -C config/sidekiq.yml
 vite: bin/vite dev
